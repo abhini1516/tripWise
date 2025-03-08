@@ -3,31 +3,42 @@ const Trip = require("../models/trip");
 // Create a new trip
 const createTrip = async (req, res) => {
   try {
-    console.log("Request received:", req.body);
-    console.log("User:", req.user);
+    console.log("🔹 Request Body:", req.body);
+    console.log("🔹 User in Request:", req.user); // Debugging: Check if req.user exists
 
-    const { title, destination, startDate, endDate, notes } = req.body;
+    const { title, destinations, startDate, endDate, budget, activities, notes } = req.body;
 
-    if (!title || !destination || !startDate || !endDate) {
+    if (!title || !destinations || !startDate || !endDate || !budget) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
+    if (!req.user || !req.user.userId) {
+      console.log("⚠️ User is missing in request!");
+      return res.status(401).json({ success: false, message: "Unauthorized: User not found in request" });
+    }
+
     const newTrip = new Trip({
-      userId: req.user.id,
+      user: req.user.userId, // Ensure user is properly assigned
       title,
-      destination,
+      destinations,
       startDate,
       endDate,
+      budget,
+      activities,
       notes,
     });
 
+    console.log("✅ Saving new trip:", newTrip);
     await newTrip.save();
     res.status(201).json({ success: true, trip: newTrip });
+
   } catch (error) {
-    console.error("Error in createTrip:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("❌ Error in createTrip:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 };
+
+
 
 // Get all trips
 const getAllTrips = async (req, res) => {
